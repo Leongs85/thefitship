@@ -732,14 +732,9 @@
 </script>
 
 <script>
-  // ── AIRTABLE CONFIG ────────────────────────────────────────────────────
-  // Paste your credentials here once your Airtable base is confirmed.
-  // Personal Access Token: create one at airtable.com/create/tokens
-  // Scopes needed: data.records:write  |  Resource: your specific base only
-  const AIRTABLE_PAT   = 'YOUR_PERSONAL_ACCESS_TOKEN'; // pat...
-  const AIRTABLE_BASE  = 'YOUR_BASE_ID';               // appXXXXXXXXXXXXXX
-  const AIRTABLE_TABLE = 'Early Access Leads';          // must match your table name exactly
-  // ───────────────────────────────────────────────────────────────────────
+  const AIRTABLE_PAT   = 'patgRHkBSxKMZGVjB.e04b3d89b100ed7d4a1be6f699509fb0a86bf053e4bb8bf3015375b00561b707';
+  const AIRTABLE_BASE  = 'app3so5cKtEnBaD5t';
+  const AIRTABLE_TABLE = 'Early Access List';
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -750,8 +745,7 @@
     const errorDiv   = document.getElementById('formError');
     const form       = document.getElementById('earlyAccessForm');
 
-    // Basic validation
-    const email = document.getElementById('email').value.trim();
+    const email     = document.getElementById('email').value.trim();
     const firstName = document.getElementById('firstName').value.trim();
     if (!firstName || !email) {
       errorDiv.textContent = 'Please fill in your name and email address.';
@@ -759,9 +753,8 @@
       return;
     }
 
-    // Collect checked interests
     const interests = [...document.querySelectorAll('input[name="interest"]:checked')]
-      .map(cb => cb.value).join(', ');
+      .map(cb => cb.value);
 
     const fields = {
       'First Name':   firstName,
@@ -770,11 +763,9 @@
       'Organisation': document.getElementById('organisation').value.trim(),
       'Role':         document.getElementById('role').value.trim(),
       'Interest':     interests,
-      'Message':      document.getElementById('message').value.trim(),
-      'Submitted At': new Date().toISOString()
+      'Message':      document.getElementById('message').value.trim()
     };
 
-    // Loading state
     btn.disabled = true;
     submitText.textContent = 'Submitting…';
     errorDiv.style.display = 'none';
@@ -797,7 +788,6 @@
         throw new Error(errData.error?.message || `Error ${res.status}`);
       }
 
-      // Success — hide form fields, show confirmation
       form.querySelectorAll(
         '.field, .field-group, .interest-grid, .field-label, .form-divider, #submitBtn, .form-privacy, hr'
       ).forEach(el => { el.style.display = 'none'; });
