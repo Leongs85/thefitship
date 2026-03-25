@@ -620,23 +620,81 @@
       we want to hear from you.
     </p>
 
-    <!-- Tally.so form embed — ID: Gx0Opk -->
-    <iframe
-      data-tally-src="https://tally.so/embed/Gx0Opk?alignLeft=1&hideTitle=1&dynamicHeight=1"
-      loading="lazy"
-      width="100%"
-      height="500"
-      frameborder="0"
-      marginheight="0"
-      marginwidth="0"
-      title="Get Early Access — The Fit Ship">
-    </iframe>
-    <script>
-      var d=document,w="https://tally.so/widgets/embed.js",
-      v=function(){"undefined"!=typeof Tally?Tally.loadEmbeds():d.querySelectorAll("[data-tally-src]:not([src])").forEach(function(e){e.src=e.dataset.tallySrc})};
-      if("undefined"!=typeof Tally)v();
-      else if(d.querySelector('script[src="'+w+'"]')==null){var s=d.createElement("script");s.src=w,s.onload=v,s.onerror=v,d.body.appendChild(s);}
-    </script>
+    <form id="earlyAccessForm" onsubmit="handleSubmit(event)" novalidate>
+
+      <p class="field-label">Your Details</p>
+      <div class="field-group">
+        <div class="field">
+          <label for="firstName">First Name</label>
+          <input type="text" id="firstName" name="firstName" placeholder="First name" required>
+        </div>
+        <div class="field">
+          <label for="lastName">Last Name</label>
+          <input type="text" id="lastName" name="lastName" placeholder="Last name" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="your@email.com" required>
+      </div>
+      <div class="field-group">
+        <div class="field">
+          <label for="organisation">Organisation <span class="opt">optional</span></label>
+          <input type="text" id="organisation" name="organisation" placeholder="Club, team or company">
+        </div>
+        <div class="field">
+          <label for="role">Your Role <span class="opt">optional</span></label>
+          <input type="text" id="role" name="role" placeholder="e.g. Head Coach, Athlete">
+        </div>
+      </div>
+
+      <hr class="form-divider">
+
+      <p class="field-label">I'm here as a… <span class="opt" style="letter-spacing:0;text-transform:none;">optional</span></p>
+      <div class="interest-grid">
+        <label class="interest-item">
+          <input type="checkbox" name="interest" value="Elite Athlete / Team">
+          <span>Elite Athlete / Team</span>
+        </label>
+        <label class="interest-item">
+          <input type="checkbox" name="interest" value="Performance Coach">
+          <span>Performance Coach</span>
+        </label>
+        <label class="interest-item">
+          <input type="checkbox" name="interest" value="Performance Brand / Partner">
+          <span>Performance Brand / Partner</span>
+        </label>
+        <label class="interest-item">
+          <input type="checkbox" name="interest" value="Investor">
+          <span>Investor</span>
+        </label>
+        <label class="interest-item">
+          <input type="checkbox" name="interest" value="Media / Press">
+          <span>Media / Press</span>
+        </label>
+        <label class="interest-item">
+          <input type="checkbox" name="interest" value="General Interest">
+          <span>General Interest</span>
+        </label>
+      </div>
+
+      <div class="field">
+        <label for="message">Message <span class="opt">optional</span></label>
+        <textarea id="message" name="message" placeholder="Tell us a bit about you and why you're interested…"></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <span id="submitText">Join the Early Access List</span>
+      </button>
+      <p class="form-privacy">We'll only ever use your details to keep you in the loop on The Fit Ship. No spam, ever.</p>
+
+      <div id="formSuccess" style="display:none;text-align:center;padding:48px 0 16px;">
+        <p style="font-size:22px;font-weight:700;color:var(--teal);margin-bottom:12px;">You're on the list.</p>
+        <p style="color:rgba(246,244,239,0.65);font-size:16px;line-height:1.7;">We'll be in touch as things take shape.<br>Keep an eye on your inbox.</p>
+      </div>
+      <div id="formError" style="display:none;text-align:center;margin-top:16px;color:#F26A2E;font-size:14px;line-height:1.5;"></div>
+
+    </form>
   </div>
 </section>
 
@@ -671,6 +729,88 @@
   window.addEventListener('scroll', () => {
     nav.style.boxShadow = window.scrollY > 40 ? '0 4px 24px rgba(0,0,0,0.4)' : 'none';
   });
+</script>
+
+<script>
+  // ── AIRTABLE CONFIG ────────────────────────────────────────────────────
+  // Paste your credentials here once your Airtable base is confirmed.
+  // Personal Access Token: create one at airtable.com/create/tokens
+  // Scopes needed: data.records:write  |  Resource: your specific base only
+  const AIRTABLE_PAT   = 'YOUR_PERSONAL_ACCESS_TOKEN'; // pat...
+  const AIRTABLE_BASE  = 'YOUR_BASE_ID';               // appXXXXXXXXXXXXXX
+  const AIRTABLE_TABLE = 'Early Access Leads';          // must match your table name exactly
+  // ───────────────────────────────────────────────────────────────────────
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const btn        = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const successDiv = document.getElementById('formSuccess');
+    const errorDiv   = document.getElementById('formError');
+    const form       = document.getElementById('earlyAccessForm');
+
+    // Basic validation
+    const email = document.getElementById('email').value.trim();
+    const firstName = document.getElementById('firstName').value.trim();
+    if (!firstName || !email) {
+      errorDiv.textContent = 'Please fill in your name and email address.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    // Collect checked interests
+    const interests = [...document.querySelectorAll('input[name="interest"]:checked')]
+      .map(cb => cb.value).join(', ');
+
+    const fields = {
+      'First Name':   firstName,
+      'Last Name':    document.getElementById('lastName').value.trim(),
+      'Email':        email,
+      'Organisation': document.getElementById('organisation').value.trim(),
+      'Role':         document.getElementById('role').value.trim(),
+      'Interest':     interests,
+      'Message':      document.getElementById('message').value.trim(),
+      'Submitted At': new Date().toISOString()
+    };
+
+    // Loading state
+    btn.disabled = true;
+    submitText.textContent = 'Submitting…';
+    errorDiv.style.display = 'none';
+
+    try {
+      const res = await fetch(
+        `https://api.airtable.com/v0/${AIRTABLE_BASE}/${encodeURIComponent(AIRTABLE_TABLE)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${AIRTABLE_PAT}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fields })
+        }
+      );
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `Error ${res.status}`);
+      }
+
+      // Success — hide form fields, show confirmation
+      form.querySelectorAll(
+        '.field, .field-group, .interest-grid, .field-label, .form-divider, #submitBtn, .form-privacy, hr'
+      ).forEach(el => { el.style.display = 'none'; });
+      successDiv.style.display = 'block';
+
+    } catch (err) {
+      btn.disabled = false;
+      submitText.textContent = 'Join the Early Access List';
+      errorDiv.textContent = 'Something went wrong — please try again, or drop us a line directly.';
+      errorDiv.style.display = 'block';
+      console.error('Airtable submission error:', err);
+    }
+  }
 </script>
 </body>
 </html>
